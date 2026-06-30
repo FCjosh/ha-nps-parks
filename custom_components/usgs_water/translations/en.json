@@ -1,0 +1,17 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "description": "Find USGS reservoir monitoring sites near a location.",
+                "data": {
+                    "latitude": "Latitude",
+                    "longitude": "Longitude",
+                    "radius": "Search radius"
+                }
+            }
+        },
+        "abort": {
+            "already_configured": "This entry is already configured."
+        }
+    }
+}
