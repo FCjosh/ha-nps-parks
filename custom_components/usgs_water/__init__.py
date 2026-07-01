@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING
 from homeassistant.const import Platform
 
 from .const import DOMAIN, LOGGER
+from .coordinator import USGSWaterCoordinator
 
 if TYPE_CHECKING:
-    from homeassistant.core import HomeAssistant
     from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
@@ -21,7 +22,10 @@ async def async_setup_entry(
     entry: ConfigEntry,
 ) -> bool:
     """Set up USGS Water from a config entry."""
-    LOGGER.debug("Setting up USGS Water with data %s", entry.data)
+    coordinator = USGSWaterCoordinator(hass=hass, entry=entry)
+    await coordinator.async_config_entry_first_refresh()
+    entry.runtime_data = coordinator
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 
