@@ -25,14 +25,17 @@ async def async_setup_entry(
     """Set up the sensor platform."""
     try:
         coordinator: USGSWaterCoordinator = entry.runtime_data
-        LOGGER.debug("Coordinator data: %s", coordinator.data)
+        LOGGER.debug("Coordinator data: %s", coordinator.data["features"])
 
         unique_sites = set(
-            f["properties"]["monitoring_location_id"] for f in coordinator.data
+            f["properties"]["monitoring_location_id"]
+            for f in coordinator.data["features"]
         )
         LOGGER.warning(
             "Coordinator data length: %s",
-            len(coordinator.data) if coordinator.data else "None",
+            len(coordinator.data["features"])
+            if coordinator.data["features"]
+            else "None",
         )
         LOGGER.warning("Unique sites: %s", unique_sites)
 
@@ -53,7 +56,7 @@ class USGSWaterSensor(USGSWaterEntity, SensorEntity):
         super().__init__(coordinator)
         self.site_id = site_id
         self._attr_unique_id = site_id
-        self._attr_name = site_id
+        self._attr_name = coordinator.data["site_names"].get(site_id, site_id)
         self._attr_native_unit_of_measurement = "ft"
 
     @property
@@ -61,7 +64,7 @@ class USGSWaterSensor(USGSWaterEntity, SensorEntity):
         """Return the most recent elevation value for this site."""
         site_features = [
             f
-            for f in self.coordinator.data
+            for f in self.coordinator.data["features"]
             if f["properties"]["monitoring_location_id"] == self.site_id
         ]
         if not site_features:

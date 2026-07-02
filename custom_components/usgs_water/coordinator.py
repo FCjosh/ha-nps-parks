@@ -16,8 +16,11 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
+MONITORING_LOCATION_URL = (
+    "https://api.waterdata.usgs.gov/ogcapi/v0/collections/monitoring-locations/items"
+)
 
-# https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
+
 class USGSWaterCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the USGS API."""
 
@@ -49,6 +52,8 @@ class USGSWaterCoordinator(DataUpdateCoordinator):
 
         try:
             session = async_get_clientsession(self.hass)
+
+            # Fetch water level readings
             params = {
                 "f": "json",
                 "bbox": f"{min_lon:.4f},{min_lat:.4f},{max_lon:.4f},{max_lat:.4f}",
@@ -56,9 +61,26 @@ class USGSWaterCoordinator(DataUpdateCoordinator):
                 "datetime": datetime_param,
                 "limit": 100,
             }
-
             response = await session.get(BASE_URL, params=params)
             data = await response.json()
-            return data["features"]
+            features = data["features"]
+
+            # Fetch human-readable names for each unique site
+            unique_ids = set(
+                f["properties"]["monitoring_location_id"] for f in features
+            )
+            site_names = {}
+            for site_id in unique_ids:
+                resp = await session.get(
+                    f"{MONITORING_LOCATION_URL}/{site_id}",
+                    params={"f": "json"},
+                )
+                location = await resp.json()
+                site_names[site_id] = location["properties"][
+                    "monitoring_location_name"
+                ].title()
+
+            return {"features": features, "site_names": site_names}
+
         except Exception as exception:
             raise UpdateFailed(exception) from exception
