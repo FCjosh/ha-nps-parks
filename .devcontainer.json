@@ -1,5 +1,5 @@
 {
-    "name": "ludeeus/usgs_water",
+    "name": "FCjosh/ha-nps-parks",
     "image": "mcr.microsoft.com/devcontainers/base:debian",
     "postCreateCommand": "scripts/setup",
     "forwardPorts": [

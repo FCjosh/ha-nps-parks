@@ -48,7 +48,7 @@ Use [black](https://github.com/ambv/black) to make sure the code follows the sty
 
 ## Test your code modification
 
-This custom component is based on [usgs_water template](https://github.com/ludeeus/usgs_water).
+This custom component is based on [nps_parks template](https://github.com/FCjosh/nps_parks).
 
 It comes with development environment in a container, easy to launch
 if you use Visual Studio Code. With this container you will have a stand alone

@@ -1,0 +1,18 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "data": {
+                    "api_key": "NPS API Key"
+                }
+            }
+        },
+        "error": {
+            "invalid_auth": "Invalid API key.",
+            "connection": "Could not connect to NPS API."
+        },
+        "abort": {
+            "already_configured": "NPS Parks is already configured."
+        }
+    }
+}

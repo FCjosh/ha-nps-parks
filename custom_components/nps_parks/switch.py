@@ -1,4 +1,4 @@
-"""Switch platform for usgs_water."""
+"""Switch platform for nps_parks."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 ENTITY_DESCRIPTIONS = (
     SwitchEntityDescription(
-        key="usgs_water",
+        key="nps_parks",
         name="Integration Switch",
         icon="mdi:format-quote-close",
     ),
@@ -40,7 +40,7 @@ async def async_setup_entry(
 
 
 class IntegrationBlueprintSwitch(IntegrationBlueprintEntity, SwitchEntity):
-    """usgs_water switch class."""
+    """nps_parks switch class."""
 
     def __init__(
         self,

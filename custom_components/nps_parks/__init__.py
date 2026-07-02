@@ -1,4 +1,4 @@
-"""Custom integration to integrate USGS Water with Home Assistant."""
+"""Custom integration to integrate NPS Parks with Home Assistant."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from homeassistant.const import Platform
 
 from .const import DOMAIN, LOGGER
-from .coordinator import USGSWaterCoordinator
+from .coordinator import NPSParksCoordinator
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -21,8 +21,8 @@ async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Set up USGS Water from a config entry."""
-    coordinator = USGSWaterCoordinator(hass=hass, entry=entry)
+    """Set up NPS Parks from a config entry."""
+    coordinator = NPSParksCoordinator(hass=hass, entry=entry)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

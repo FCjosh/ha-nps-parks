@@ -1,4 +1,4 @@
-"""Sensor platform for usgs_water."""
+"""Sensor platform for nps_parks."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING
 from homeassistant.components.sensor import SensorEntity
 
 from .const import LOGGER
-from .entity import USGSWaterEntity
+from .entity import NPSParksEntity
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from .coordinator import USGSWaterCoordinator
+    from .coordinator import NPSParksCoordinator
 
 
 async def async_setup_entry(
@@ -24,7 +24,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the sensor platform."""
     try:
-        coordinator: USGSWaterCoordinator = entry.runtime_data
+        coordinator: NPSParksCoordinator = entry.runtime_data
         LOGGER.debug("Coordinator data: %s", coordinator.data["features"])
 
         unique_sites = set(
@@ -40,7 +40,7 @@ async def async_setup_entry(
         LOGGER.warning("Unique sites: %s", unique_sites)
 
         async_add_entities(
-            USGSWaterSensor(coordinator=coordinator, site_id=site_id)
+            NPSParksSensor(coordinator=coordinator, site_id=site_id)
             for site_id in unique_sites
         )
     except Exception as e:
@@ -48,10 +48,10 @@ async def async_setup_entry(
         raise
 
 
-class USGSWaterSensor(USGSWaterEntity, SensorEntity):
-    """USGS Water sensor for a single monitoring location."""
+class NPSParksSensor(NPSParksEntity, SensorEntity):
+    """NPS Parks sensor for a single monitoring location."""
 
-    def __init__(self, coordinator: USGSWaterCoordinator, site_id: str) -> None:
+    def __init__(self, coordinator: NPSParksCoordinator, site_id: str) -> None:
         """Initialize the sensor class."""
         super().__init__(coordinator)
         self.site_id = site_id

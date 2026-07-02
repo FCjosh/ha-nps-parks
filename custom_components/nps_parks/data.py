@@ -1,4 +1,4 @@
-"""Custom types for usgs_water."""
+"""Custom types for nps_parks."""
 
 from __future__ import annotations
 

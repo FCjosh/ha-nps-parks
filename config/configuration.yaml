@@ -9,4 +9,4 @@ homeassistant:
 logger:
   default: info
   logs:
-    custom_components.usgs_water: debug
+    custom_components.nps_parks: debug

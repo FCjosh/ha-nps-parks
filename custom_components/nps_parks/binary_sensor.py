@@ -1,4 +1,4 @@
-"""Binary sensor platform for usgs_water."""
+"""Binary sensor platform for nps_parks."""
 
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
 ENTITY_DESCRIPTIONS = (
     BinarySensorEntityDescription(
-        key="usgs_water",
-        name="USGS Water Binary Sensor",
+        key="nps_parks",
+        name="NPS Parks Binary Sensor",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     ),
 )
@@ -44,7 +44,7 @@ async def async_setup_entry(
 
 
 class IntegrationBlueprintBinarySensor(IntegrationBlueprintEntity, BinarySensorEntity):
-    """usgs_water binary_sensor class."""
+    """nps_parks binary_sensor class."""
 
     def __init__(
         self,
