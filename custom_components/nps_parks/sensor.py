@@ -28,7 +28,7 @@ async def async_setup_entry(
         coordinator: NPSParksCoordinator = entry.runtime_data
 
         async_add_entities(
-            NPSParksSensor(coordinator=coordinator, site_data=site)  # type: ignore
+            NPSParksSensor(coordinator=coordinator, site_data=site)
             for site in coordinator.data
         )
     except Exception as e:
@@ -47,9 +47,12 @@ class NPSParksSensor(NPSParksEntity, SensorEntity):
         self.site_data = site_data
 
     @property
-    def native_value(self) -> str | None:
-        """Return "visited" or "unvisited"."""
-        return "unvisited"
+    def native_value(self) -> str:
+        return (
+            "visited"
+            if self.coordinator.storage.is_visited(self._attr_unique_id)
+            else "unvisited"
+        )
 
     @property
     def extra_state_attributes(self) -> dict:
@@ -57,11 +60,9 @@ class NPSParksSensor(NPSParksEntity, SensorEntity):
         lat_long = self.site_data["latLong"]
         lat_match = re.search(r"lat:([-\d.]+)", lat_long)
         lon_match = re.search(r"long:([-\d.]+)", lat_long)
-        latitude = float(lat_match.group(1)) if lat_match else None
-        longitude = float(lon_match.group(1)) if lon_match else None
         return {
-            "latitude": latitude,
-            "longitude": longitude,
+            "latitude": float(lat_match.group(1)) if lat_match else None,
+            "longitude": float(lon_match.group(1)) if lon_match else None,
             "description": self.site_data["description"],
             "designation": self.site_data["designation"],
             "states": self.site_data["states"],

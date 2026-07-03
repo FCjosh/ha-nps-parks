@@ -8,6 +8,7 @@ from homeassistant.const import Platform
 
 from .const import DOMAIN, LOGGER
 from .coordinator import NPSParksCoordinator
+from .services import async_setup_services, async_unload_services
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -16,16 +17,17 @@ if TYPE_CHECKING:
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
-# https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
     """Set up NPS Parks from a config entry."""
     coordinator = NPSParksCoordinator(hass=hass, entry=entry)
+    await coordinator.storage.async_load()
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await async_setup_services(hass, coordinator)
     return True
 
 

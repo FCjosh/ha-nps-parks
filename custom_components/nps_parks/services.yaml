@@ -1,0 +1,23 @@
+mark_visited:
+  name: Mark Park Visited
+  description: Mark a national park as visited.
+  fields:
+    park_code:
+      name: Park Code
+      description: The NPS park code (e.g. yose, grca, zion).
+      required: true
+      example: "yose"
+      selector:
+        text:
+
+mark_unvisited:
+  name: Mark Park Unvisited
+  description: Mark a national park as unvisited.
+  fields:
+    park_code:
+      name: Park Code
+      description: The NPS park code (e.g. yose, grca, zion).
+      required: true
+      example: "yose"
+      selector:
+        text:

@@ -9,6 +9,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import API_KEY, BASE_URL, DOMAIN, LOGGER
+from .data import NPSParksStorage
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -27,6 +28,7 @@ class NPSParksCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(weeks=1),
         )
         self.api_key = entry.data[API_KEY]
+        self.storage = NPSParksStorage(hass)
 
     async def _async_update_data(self) -> Any:
         """Fetch data from NPS."""

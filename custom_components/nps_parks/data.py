@@ -1,25 +1,44 @@
-"""Custom types for nps_parks."""
+"""Storage for NPS Parks visited state."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from homeassistant.helpers.storage import Store
+
 if TYPE_CHECKING:
-    from homeassistant.config_entries import ConfigEntry
-    from homeassistant.loader import Integration
+    from homeassistant.core import HomeAssistant
 
-    from .api import IntegrationBlueprintApiClient
-    from .coordinator import BlueprintDataUpdateCoordinator
-
-
-type IntegrationBlueprintConfigEntry = ConfigEntry[IntegrationBlueprintData]
+STORAGE_KEY = "nps_parks.visited"
+STORAGE_VERSION = 1
 
 
-@dataclass
-class IntegrationBlueprintData:
-    """Data for the Blueprint integration."""
+class NPSParksStorage:
+    """Manages persistent storage of visited park state."""
 
-    client: IntegrationBlueprintApiClient
-    coordinator: BlueprintDataUpdateCoordinator
-    integration: Integration
+    def __init__(self, hass: HomeAssistant) -> None:
+        self._store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
+        self._visited: set[str] = set()
+
+    async def async_load(self) -> None:
+        """Load visited state from disk."""
+        data = await self._store.async_load()
+        if data:
+            self._visited = set(data.get("visited", []))
+
+    def is_visited(self, park_code: str) -> bool:
+        """Return True if the park has been visited."""
+        return park_code in self._visited
+
+    async def async_mark_visited(self, park_code: str) -> None:
+        """Mark a park as visited and persist."""
+        self._visited.add(park_code)
+        await self._save()
+
+    async def async_mark_unvisited(self, park_code: str) -> None:
+        """Mark a park as unvisited and persist."""
+        self._visited.discard(park_code)
+        await self._save()
+
+    async def _save(self) -> None:
+        await self._store.async_save({"visited": list(self._visited)})
