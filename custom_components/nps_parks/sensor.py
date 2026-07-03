@@ -6,8 +6,14 @@ import re
 from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.helpers import entity_registry as er
 
-from .const import LOGGER
+from .const import (
+    CONF_DESIGNATIONS,
+    DESIGNATION_GROUP_EXCEPTIONS,
+    DESIGNATION_GROUPS,
+    LOGGER,
+)
 from .entity import NPSParksEntity
 
 if TYPE_CHECKING:
@@ -26,10 +32,39 @@ async def async_setup_entry(
     """Set up the sensor platform."""
     try:
         coordinator: NPSParksCoordinator = entry.runtime_data
+        selected = entry.options.get(CONF_DESIGNATIONS, [])
+
+        all_parks = coordinator.data
+        if selected:
+            included_designations: set[str] = set()
+            included_exceptions: set[str] = set()
+            for group in selected:
+                included_designations |= DESIGNATION_GROUPS.get(group, set())
+                included_exceptions |= DESIGNATION_GROUP_EXCEPTIONS.get(group, set())
+
+            included = {
+                p["parkCode"]
+                for p in all_parks
+                if p["designation"] in included_designations
+                or p["parkCode"] in included_exceptions
+            }
+            excluded = {p["parkCode"] for p in all_parks} - included
+        else:
+            included = {p["parkCode"] for p in all_parks}
+            excluded = set()
+
+        if excluded:
+            registry = er.async_get(hass)
+            for entity_entry in er.async_entries_for_config_entry(
+                registry, entry.entry_id
+            ):
+                if entity_entry.unique_id in excluded:
+                    registry.async_remove(entity_entry.entity_id)
 
         async_add_entities(
             NPSParksSensor(coordinator=coordinator, site_data=site)
-            for site in coordinator.data
+            for site in all_parks
+            if site["parkCode"] in included
         )
     except Exception as e:
         LOGGER.error("Error setting up sensor: %s", e)

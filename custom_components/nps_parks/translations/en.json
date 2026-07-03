@@ -14,5 +14,26 @@
         "abort": {
             "already_configured": "NPS Parks is already configured."
         }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "update_interval": "Update Frequency",
+                    "designations": "Park Designations (leave empty to include all)"
+                }
+            }
+        }
+    },
+    "selector": {
+        "update_interval": {
+            "options": {
+                "hourly": "Every Hour",
+                "twice_daily": "Twice Daily",
+                "daily": "Daily",
+                "weekly": "Weekly",
+                "monthly": "Monthly"
+            }
+        }
     }
 }

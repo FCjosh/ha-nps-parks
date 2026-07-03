@@ -8,7 +8,15 @@ from typing import TYPE_CHECKING, Any
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import API_KEY, BASE_URL, DOMAIN, LOGGER
+from .const import (
+    API_KEY,
+    BASE_URL,
+    CONF_UPDATE_INTERVAL,
+    DEFAULT_UPDATE_INTERVAL,
+    DOMAIN,
+    LOGGER,
+    UPDATE_INTERVAL_MAP,
+)
 from .data import NPSParksStorage
 
 if TYPE_CHECKING:
@@ -20,12 +28,12 @@ class NPSParksCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the NPS API."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        """Initialize the coordinator."""
+        interval_key = entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
         super().__init__(
             hass=hass,
             logger=LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(weeks=1),
+            update_interval=UPDATE_INTERVAL_MAP[interval_key],
         )
         self.api_key = entry.data[API_KEY]
         self.storage = NPSParksStorage(hass)
@@ -37,6 +45,14 @@ class NPSParksCoordinator(DataUpdateCoordinator):
             params = {"limit": 500, "api_key": self.api_key}
             response = await session.get(BASE_URL, params=params)
             data = await response.json()
+            samoa = next(
+                (p for p in data["data"] if "samoa" in p["fullName"].lower()), None
+            )
+            LOGGER.warning(
+                "Samoa entry: %s | %s",
+                samoa["designation"] if samoa else "not found",
+                samoa["parkCode"] if samoa else "",
+            )
             return data["data"]
 
         except Exception as exception:
