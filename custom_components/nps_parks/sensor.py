@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.helpers import entity_registry as er
 
 from .const import (
@@ -52,7 +52,7 @@ async def async_setup_entry(
         else:
             included = {p["parkCode"] for p in all_parks}
             excluded = set()
-
+        coordinator.tracked_park_codes: set[str] = included
         if excluded:
             registry = er.async_get(hass)
             for entity_entry in er.async_entries_for_config_entry(
@@ -61,11 +61,18 @@ async def async_setup_entry(
                 if entity_entry.unique_id in excluded:
                     registry.async_remove(entity_entry.entity_id)
 
-        async_add_entities(
+        entities: list[SensorEntity] = [
             NPSParksSensor(coordinator=coordinator, site_data=site)
             for site in all_parks
             if site["parkCode"] in included
-        )
+        ]
+        entities += [
+            NPSParksStatsSensor(coordinator, "total"),
+            NPSParksStatsSensor(coordinator, "visited"),
+            NPSParksStatsSensor(coordinator, "unvisited"),
+            NPSParksStatsSensor(coordinator, "percentage"),
+        ]
+        async_add_entities(entities)
     except Exception as e:
         LOGGER.error("Error setting up sensor: %s", e)
         raise
@@ -73,6 +80,8 @@ async def async_setup_entry(
 
 class NPSParksSensor(NPSParksEntity, SensorEntity):
     """NPS Parks sensor for a single monitoring location."""
+
+    _attr_has_entity_name = False
 
     def __init__(self, coordinator: NPSParksCoordinator, site_data: dict) -> None:
         """Initialize the sensor class."""
@@ -83,6 +92,7 @@ class NPSParksSensor(NPSParksEntity, SensorEntity):
 
     @property
     def native_value(self) -> str:
+        """Return the sensor value."""
         return (
             "visited"
             if self.coordinator.storage.is_visited(self._attr_unique_id)
@@ -111,3 +121,44 @@ class NPSParksSensor(NPSParksEntity, SensorEntity):
             if self.site_data["images"]
             else None,
         }
+
+
+class NPSParksStatsSensor(NPSParksEntity, SensorEntity):
+    """Sensor for aggregate stats."""
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    _STAT_CONFIG = {
+        "total": ("Total Parks", "mdi:forest", "parks"),
+        "visited": ("Parks Visited", "mdi:check-circle", "parks"),
+        "unvisited": ("Parks Remaining", "mdi:circle-outline", "parks"),
+        "percentage": ("Percentage Visited", "mdi:percent", "%"),
+    }
+
+    def __init__(self, coordinator: NPSParksCoordinator, stat: str) -> None:
+        super().__init__(coordinator)
+        self._stat = stat
+        name, icon, unit = self._STAT_CONFIG[stat]
+        self._attr_unique_id = f"nps_parks_stats_{stat}"
+        self._attr_name = name
+        self._attr_icon = icon
+        self._attr_native_unit_of_measurement = unit
+
+    @property
+    def native_value(self) -> float:
+        parks = [
+            p
+            for p in self.coordinator.data
+            if p["parkCode"] in self.coordinator.tracked_park_codes
+        ]
+        total = len(parks)
+        visited = sum(
+            1 for p in parks if self.coordinator.storage.is_visited(p["parkCode"])
+        )
+        if self._stat == "total":
+            return total
+        if self._stat == "visited":
+            return visited
+        if self._stat == "unvisited":
+            return total - visited
+        return round(visited / total * 100, 1) if total else 0.0
