@@ -28,7 +28,13 @@ This integration connects to the [National Park Service API](https://www.nps.gov
 
 ## Installation
 
-> HACS listing coming soon. For now, use the manual method below.
+### HACS (recommended)
+
+1. In Home Assistant, go to **HACS → Custom repositories**
+2. Paste your GitHub repo URL and set category to **Integration**, then click **Add**
+3. Search for **NPS Parks** in HACS and install it
+4. Restart Home Assistant
+5. Go to **Settings → Devices & Services → Add Integration** and search for **NPS Parks**
 
 ### Manual
 
@@ -39,6 +45,12 @@ This integration connects to the [National Park Service API](https://www.nps.gov
    ```
 3. Restart Home Assistant
 4. Go to **Settings → Devices & Services → Add Integration** and search for **NPS Parks**
+
+---
+
+## Custom Lovelace Card
+
+A companion Lovelace card is in development that will display your visited and unvisited parks on an interactive map. Once released it will be available as a separate HACS repository.
 
 ---
 
