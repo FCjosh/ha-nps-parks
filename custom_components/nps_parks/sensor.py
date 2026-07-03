@@ -111,6 +111,7 @@ class NPSParksSensor(NPSParksEntity, SensorEntity):
         lat_match = re.search(r"lat:([-\d.]+)", lat_long)
         lon_match = re.search(r"long:([-\d.]+)", lat_long)
         return {
+            "park_code": self._park_code,
             "latitude": float(lat_match.group(1)) if lat_match else None,
             "longitude": float(lon_match.group(1)) if lon_match else None,
             "description": self.site_data["description"],
