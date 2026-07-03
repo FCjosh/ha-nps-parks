@@ -10,7 +10,7 @@ from .coordinator import NPSParksCoordinator
 class NPSParksEntity(CoordinatorEntity[NPSParksCoordinator]):
     """Base entity for NPS Parks."""
 
-    _attr_attribution = "Data provided by U.S. Geological Survey"
+    _attr_attribution = "Data provided by the National Park Service"
 
     def __init__(self, coordinator: NPSParksCoordinator) -> None:
         """Initialize."""

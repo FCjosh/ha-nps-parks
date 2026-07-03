@@ -41,7 +41,7 @@ class NPSParksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             session = async_get_clientsession(self.hass)
             response = await session.get(
-                f"{BASE_URL}parks",
+                f"{BASE_URL}",
                 params={"limit": 1, "api_key": api_key},
             )
             if response.status in (401, 403):
