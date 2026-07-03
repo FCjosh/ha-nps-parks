@@ -19,12 +19,13 @@ class NPSParksEntity(CoordinatorEntity["NPSParksCoordinator"]):
     _attr_attribution = "Data provided by the National Park Service"
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: "NPSParksCoordinator") -> None:
-        """Initialize."""
+    def __init__(self, coordinator: NPSParksCoordinator) -> None:
+        """Initialize the NPS Parks entity."""
         super().__init__(coordinator)
 
     @property
     def device_info(self) -> DeviceInfo:
+        """Return device info."""
         return DeviceInfo(
             identifiers={(DOMAIN, "nps_parks")},
             name="NPS Parks",

@@ -17,6 +17,7 @@ class NPSParksStorage:
     """Manages persistent storage of visited park state."""
 
     def __init__(self, hass: HomeAssistant) -> None:
+        """Initialize the NPS Parks storage."""
         self._store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self._visited: set[str] = set()
 

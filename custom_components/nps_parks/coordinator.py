@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -24,10 +23,11 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
 
-class NPSParksCoordinator(DataUpdateCoordinator):
+class NPSParksCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
     """Class to manage fetching data from the NPS API."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Initialize the NPS Parks coordinator."""
         interval_key = entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
         super().__init__(
             hass=hass,
@@ -39,7 +39,7 @@ class NPSParksCoordinator(DataUpdateCoordinator):
         self.storage = NPSParksStorage(hass)
         self.tracked_park_codes: set[str] = set()
 
-    async def _async_update_data(self) -> Any:
+    async def _async_update_data(self) -> list[dict[str, Any]]:
         """Fetch data from NPS."""
         try:
             session = async_get_clientsession(self.hass)

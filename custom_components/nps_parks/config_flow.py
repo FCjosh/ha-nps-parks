@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+import aiohttp
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
@@ -19,6 +22,9 @@ from .const import (
     UPDATE_INTERVAL_OPTIONS,
 )
 
+if TYPE_CHECKING:
+    from homeassistant.config_entries import ConfigEntry
+
 
 class NPSParksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for ha-nps-parks."""
@@ -26,9 +32,9 @@ class NPSParksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(
-        self, user_input: dict | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
-        """Handle a flow initialized by the user."""
+        """Handle the initial setup step."""
         _errors = {}
         if user_input is not None:
             error = await self._validate_api_key(user_input[API_KEY])
@@ -50,7 +56,7 @@ class NPSParksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def _validate_api_key(self, api_key: str) -> str | None:
-        """Return None if valid, or an error string if not."""
+        """Return an error string if the API key is invalid, else None."""
         try:
             session = async_get_clientsession(self.hass)
             response = await session.get(
@@ -59,18 +65,27 @@ class NPSParksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             )
             if response.status in (401, 403):
                 return "invalid_auth"
-            return None
-        except Exception:
+        except aiohttp.ClientError, TimeoutError:
             return "connection"
+        else:
+            return None
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(
+        _config_entry: ConfigEntry,
+    ) -> NPSParksOptionsFlowHandler:
+        """Return the options flow handler."""
         return NPSParksOptionsFlowHandler()
 
 
 class NPSParksOptionsFlowHandler(config_entries.OptionsFlow):
-    async def async_step_init(self, user_input=None):
+    """Options flow for NPS Parks integration."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Handle the options step."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 

@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 from homeassistant.const import Platform
 
-from .const import DOMAIN, LOGGER
 from .coordinator import NPSParksCoordinator
 from .services import async_setup_services, async_unload_services
 
@@ -36,7 +35,8 @@ async def async_unload_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Handle removal of an entry."""
+    """Unload a config entry."""
+    async_unload_services(hass)
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
