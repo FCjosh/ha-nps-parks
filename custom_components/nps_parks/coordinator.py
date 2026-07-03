@@ -38,6 +38,7 @@ class NPSParksCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         self.api_key = entry.data[API_KEY]
         self.storage = NPSParksStorage(hass)
         self.tracked_park_codes: set[str] = set()
+        self.selected_park_code: str | None = None
 
     async def _async_update_data(self) -> list[dict[str, Any]]:
         """Fetch data from NPS."""

@@ -21,7 +21,43 @@ async def async_setup_entry(
 ) -> None:
     """Set up NPS Parks button entities."""
     coordinator: NPSParksCoordinator = entry.runtime_data
-    async_add_entities([NPSParksRefreshButton(coordinator)])
+    async_add_entities(
+        [
+            NPSParksRefreshButton(coordinator),
+            NPSParksMarkSelectedVisitedButton(coordinator),
+            NPSParksMarkSelectedUnvisitedButton(coordinator),
+        ]
+    )
+
+
+class NPSParksMarkSelectedVisitedButton(NPSParksEntity, ButtonEntity):
+    """Button to mark the selected park as visited."""
+
+    _attr_name = "Mark Selected Visited"
+    _attr_unique_id = "nps_parks_mark_selected_visited"
+    _attr_icon = "mdi:map-marker-check"
+
+    async def async_press(self) -> None:
+        """Mark the selected park as visited."""
+        code = self.coordinator.selected_park_code
+        if code:
+            await self.coordinator.storage.async_mark_visited(code)
+            self.coordinator.async_set_updated_data(self.coordinator.data)
+
+
+class NPSParksMarkSelectedUnvisitedButton(NPSParksEntity, ButtonEntity):
+    """Button to mark the selected park as unvisited."""
+
+    _attr_name = "Mark Selected Unvisited"
+    _attr_unique_id = "nps_parks_mark_selected_unvisited"
+    _attr_icon = "mdi:map-marker-remove"
+
+    async def async_press(self) -> None:
+        """Mark the selected park as unvisited."""
+        code = self.coordinator.selected_park_code
+        if code:
+            await self.coordinator.storage.async_mark_unvisited(code)
+            self.coordinator.async_set_updated_data(self.coordinator.data)
 
 
 class NPSParksRefreshButton(NPSParksEntity, ButtonEntity):
