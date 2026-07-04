@@ -50,7 +50,12 @@ This integration connects to the [National Park Service API](https://www.nps.gov
 
 ## Custom Lovelace Card
 
-A companion Lovelace card is in development that will display your visited and unvisited parks on an interactive map. Once released it will be available as a separate HACS repository.
+A companion Lovelace card is available at
+[nps-parks-card](https://github.com/FCjosh/lovelace-nps-parks-card) — it
+displays your visited and unvisited parks on an interactive map, with
+clickable markers, a searchable park list, and full theming support.
+Install it as a HACS custom repository (category: Lovelace) or manually —
+see its README for setup.
 
 ---
 
