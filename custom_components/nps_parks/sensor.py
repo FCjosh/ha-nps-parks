@@ -93,7 +93,14 @@ class NPSParksSensor(NPSParksEntity, SensorEntity):
         self._park_code: str = site_data["parkCode"]
         self._attr_unique_id = self._park_code
         self._attr_name = site_data["fullName"]
-        self.site_data = site_data
+
+    @property
+    def site_data(self) -> dict[str, Any]:
+        """Return this park's current data from the coordinator."""
+        return next(
+            (p for p in self.coordinator.data if p["parkCode"] == self._park_code),
+            {},
+        )
 
     @property
     def native_value(self) -> str:
@@ -107,24 +114,26 @@ class NPSParksSensor(NPSParksEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict:
         """Return the state attributes."""
-        lat_long = self.site_data["latLong"]
+        site_data = self.site_data
+        lat_long = site_data.get("latLong", "")
         lat_match = re.search(r"lat:([-\d.]+)", lat_long)
         lon_match = re.search(r"long:([-\d.]+)", lat_long)
+        images = site_data.get("images") or []
         return {
             "park_code": self._park_code,
             "latitude": float(lat_match.group(1)) if lat_match else None,
             "longitude": float(lon_match.group(1)) if lon_match else None,
-            "description": self.site_data["description"],
-            "designation": self.site_data["designation"],
-            "states": self.site_data["states"],
-            "url": self.site_data["url"],
+            "description": site_data.get("description"),
+            "designation": site_data.get("designation"),
+            "states": site_data.get("states"),
+            "url": site_data.get("url"),
             "image": {
-                "url": self.site_data["images"][0]["url"],
-                "credit": self.site_data["images"][0]["credit"],
-                "alt_text": self.site_data["images"][0]["altText"],
-                "caption": self.site_data["images"][0]["caption"],
+                "url": images[0]["url"],
+                "credit": images[0]["credit"],
+                "alt_text": images[0]["altText"],
+                "caption": images[0]["caption"],
             }
-            if self.site_data["images"]
+            if images
             else None,
         }
 

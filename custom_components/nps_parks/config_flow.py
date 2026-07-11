@@ -65,6 +65,7 @@ class NPSParksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             )
             if response.status in (401, 403):
                 return "invalid_auth"
+            response.raise_for_status()
         except aiohttp.ClientError, TimeoutError:
             return "connection"
         else:

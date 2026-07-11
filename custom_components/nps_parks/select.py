@@ -41,33 +41,38 @@ class NPSParkSelectEntity(NPSParksEntity, SelectEntity):
         """Initialize the park select entity."""
         super().__init__(coordinator)
         selected = entry.options.get(CONF_DESIGNATIONS, [])
-        all_parks = coordinator.data
+        self._filter_enabled = bool(selected)
+        self._included_designations: set[str] = set()
+        self._included_exceptions: set[str] = set()
+        for group in selected:
+            self._included_designations |= DESIGNATION_GROUPS.get(group, set())
+            self._included_exceptions |= DESIGNATION_GROUP_EXCEPTIONS.get(group, set())
 
-        if selected:
-            included_designations: set[str] = set()
-            included_exceptions: set[str] = set()
-            for group in selected:
-                included_designations |= DESIGNATION_GROUPS.get(group, set())
-                included_exceptions |= DESIGNATION_GROUP_EXCEPTIONS.get(group, set())
+    def _parks(self) -> list[dict]:
+        """Return the currently tracked parks, filtered and sorted by name."""
+        all_parks = self.coordinator.data
+        if self._filter_enabled:
             parks = [
                 p
                 for p in all_parks
-                if p["designation"] in included_designations
-                or p["parkCode"] in included_exceptions
+                if p["designation"] in self._included_designations
+                or p["parkCode"] in self._included_exceptions
             ]
         else:
             parks = list(all_parks)
-
         parks.sort(key=lambda p: p["fullName"])
-        self._name_to_code: dict[str, str] = {
-            p["fullName"]: p["parkCode"] for p in parks
-        }
-        self._attr_options = [_PLACEHOLDER] + [p["fullName"] for p in parks]
+        return parks
+
+    @property
+    def options(self) -> list[str]:
+        """Return the current list of selectable park names."""
+        return [_PLACEHOLDER] + [p["fullName"] for p in self._parks()]
 
     async def async_select_option(self, option: str) -> None:
         """Store the selected park code on the coordinator."""
+        name_to_code = {p["fullName"]: p["parkCode"] for p in self._parks()}
         self.coordinator.selected_park_code = (
-            None if option == _PLACEHOLDER else self._name_to_code.get(option)
+            None if option == _PLACEHOLDER else name_to_code.get(option)
         )
         self._attr_current_option = option
         self.async_write_ha_state()
