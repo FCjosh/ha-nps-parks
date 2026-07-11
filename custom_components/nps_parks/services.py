@@ -10,6 +10,8 @@ from homeassistant.helpers import config_validation as cv
 from .const import DOMAIN, LOGGER
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
+
     from homeassistant.core import HomeAssistant, ServiceCall
 
     from .coordinator import NPSParksCoordinator
@@ -29,23 +31,33 @@ async def async_setup_services(
 ) -> None:
     """Register NPS Parks services."""
 
-    async def handle_mark_visited(call: ServiceCall) -> None:
-        park_code = call.data["park_code"]
-        await coordinator.storage.async_mark_visited(park_code)
-        coordinator.async_set_updated_data(coordinator.data)
-        LOGGER.debug("Marked %s as visited", park_code)
+    def make_handler(*, visited: bool) -> Callable[[ServiceCall], Coroutine]:
+        mark = (
+            coordinator.storage.async_mark_visited
+            if visited
+            else coordinator.storage.async_mark_unvisited
+        )
+        label = "visited" if visited else "unvisited"
 
-    async def handle_mark_unvisited(call: ServiceCall) -> None:
-        park_code = call.data["park_code"]
-        await coordinator.storage.async_mark_unvisited(park_code)
-        coordinator.async_set_updated_data(coordinator.data)
-        LOGGER.debug("Marked %s as unvisited", park_code)
+        async def handle(call: ServiceCall) -> None:
+            park_code = call.data["park_code"]
+            await mark(park_code)
+            coordinator.async_set_updated_data(coordinator.data)
+            LOGGER.debug("Marked %s as %s", park_code, label)
+
+        return handle
 
     hass.services.async_register(
-        DOMAIN, SERVICE_MARK_VISITED, handle_mark_visited, schema=SERVICE_SCHEMA
+        DOMAIN,
+        SERVICE_MARK_VISITED,
+        make_handler(visited=True),
+        schema=SERVICE_SCHEMA,
     )
     hass.services.async_register(
-        DOMAIN, SERVICE_MARK_UNVISITED, handle_mark_unvisited, schema=SERVICE_SCHEMA
+        DOMAIN,
+        SERVICE_MARK_UNVISITED,
+        make_handler(visited=False),
+        schema=SERVICE_SCHEMA,
     )
 
 

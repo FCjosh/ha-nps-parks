@@ -27,7 +27,7 @@ class NPSParksEntity(CoordinatorEntity["NPSParksCoordinator"]):
     def device_info(self) -> DeviceInfo:
         """Return device info."""
         return DeviceInfo(
-            identifiers={(DOMAIN, "nps_parks")},
+            identifiers={(DOMAIN, DOMAIN)},
             name="NPS Parks",
             manufacturer="National Park Service",
             configuration_url="https://www.nps.gov",

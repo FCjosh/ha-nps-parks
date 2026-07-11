@@ -18,9 +18,9 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
-    NPS_DESIGNATIONS,
     UPDATE_INTERVAL_OPTIONS,
 )
+from .designations import NPS_DESIGNATIONS
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -60,7 +60,7 @@ class NPSParksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             session = async_get_clientsession(self.hass)
             response = await session.get(
-                f"{BASE_URL}",
+                BASE_URL,
                 params={"limit": 1, "api_key": api_key},
             )
             if response.status in (401, 403):

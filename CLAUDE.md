@@ -31,9 +31,9 @@ Standard HA integration shape, entry point `custom_components/nps_parks/__init__
 - **`services.py`** / **`services.yaml`** — registers `nps_parks.mark_visited` / `nps_parks.mark_unvisited`, taking a `park_code` string directly (usable from automations without needing the select/button UI).
 - **`config_flow.py`** — single required field (API key), validated by making a live `limit=1` request to the NPS API before saving. Options flow lets the user change update interval and designation filter after setup; changing options triggers `async_reload_entry` (full reload) via `__init__.py`.
 
-### Designation grouping (`const.py`)
+### Designation grouping (`designations.py`)
 
-The NPS API returns many free-text `designation` strings (e.g. "National Historic Site", "Memorial Parkway"). `DESIGNATION_GROUPS` maps a small set of user-facing group names (shown in the options flow, `NPS_DESIGNATIONS`) to the sets of raw API designation strings that belong to each group — this is the only place that knowledge lives, and it needs updating if the NPS API introduces a new designation string. `DESIGNATION_GROUP_EXCEPTIONS` handles specific `parkCode`s that should count toward a group despite having no matching (or blank) designation in the API (e.g. American Samoa, `npsa`, under "National Park"). Both `sensor.py` and `select.py` independently apply this same filtering logic when building their entity/option lists — keep them in sync if the filtering logic changes.
+The NPS API returns many free-text `designation` strings (e.g. "National Historic Site", "Memorial Parkway"). `DESIGNATION_GROUPS` maps a small set of user-facing group names (shown in the options flow, `NPS_DESIGNATIONS`) to the sets of raw API designation strings that belong to each group — this is the only place that knowledge lives, and it needs updating if the NPS API introduces a new designation string. `DESIGNATION_GROUP_EXCEPTIONS` handles specific `parkCode`s that should count toward a group despite having no matching (or blank) designation in the API (e.g. American Samoa, `npsa`, under "National Park"). `filter_parks(parks, selected_groups)` is the single shared entry point for applying this filter — both `sensor.py` (building tracked entities) and `select.py` (building the dropdown options) call it rather than re-deriving the included/excluded sets themselves.
 
 ## Code style
 

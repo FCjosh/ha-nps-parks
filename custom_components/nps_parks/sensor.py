@@ -8,12 +8,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.helpers import entity_registry as er
 
-from .const import (
-    CONF_DESIGNATIONS,
-    DESIGNATION_GROUP_EXCEPTIONS,
-    DESIGNATION_GROUPS,
-    LOGGER,
-)
+from .const import CONF_DESIGNATIONS
+from .designations import filter_parks
 from .entity import NPSParksEntity
 
 if TYPE_CHECKING:
@@ -30,54 +26,31 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor platform."""
-    try:
-        coordinator: NPSParksCoordinator = entry.runtime_data
-        selected = entry.options.get(CONF_DESIGNATIONS, [])
+    coordinator: NPSParksCoordinator = entry.runtime_data
+    selected = entry.options.get(CONF_DESIGNATIONS, [])
 
-        all_parks = coordinator.data
-        if selected:
-            included_designations: set[str] = set()
-            included_exceptions: set[str] = set()
-            for group in selected:
-                included_designations |= DESIGNATION_GROUPS.get(group, set())
-                included_exceptions |= DESIGNATION_GROUP_EXCEPTIONS.get(group, set())
+    all_parks = coordinator.data
+    tracked_parks = filter_parks(all_parks, selected)
+    included = {p["parkCode"] for p in tracked_parks}
+    excluded = {p["parkCode"] for p in all_parks} - included
 
-            included = {
-                p["parkCode"]
-                for p in all_parks
-                if p["designation"] in included_designations
-                or p["parkCode"] in included_exceptions
-            }
-            excluded = {p["parkCode"] for p in all_parks} - included
-        else:
-            included = {p["parkCode"] for p in all_parks}
-            excluded = set()
+    coordinator.tracked_park_codes = included
 
-        coordinator.tracked_park_codes = included
+    if excluded:
+        registry = er.async_get(hass)
+        for entity_entry in er.async_entries_for_config_entry(registry, entry.entry_id):
+            if entity_entry.unique_id in excluded:
+                registry.async_remove(entity_entry.entity_id)
 
-        if excluded:
-            registry = er.async_get(hass)
-            for entity_entry in er.async_entries_for_config_entry(
-                registry, entry.entry_id
-            ):
-                if entity_entry.unique_id in excluded:
-                    registry.async_remove(entity_entry.entity_id)
-
-        entities = [
-            NPSParksSensor(coordinator=coordinator, site_data=site)
-            for site in all_parks
-            if site["parkCode"] in included
-        ]
-        entities += [
-            NPSParksStatsSensor(coordinator, "total"),
-            NPSParksStatsSensor(coordinator, "visited"),
-            NPSParksStatsSensor(coordinator, "unvisited"),
-            NPSParksStatsSensor(coordinator, "percentage"),
-        ]
-        async_add_entities(entities)
-    except Exception as e:
-        LOGGER.error("Error setting up sensor: %s", e)
-        raise
+    entities = [
+        NPSParksSensor(coordinator=coordinator, site_data=site)
+        for site in tracked_parks
+    ]
+    entities += [
+        NPSParksStatsSensor(coordinator, stat)
+        for stat in NPSParksStatsSensor.STAT_CONFIG
+    ]
+    async_add_entities(entities)
 
 
 class NPSParksSensor(NPSParksEntity, SensorEntity):
@@ -142,7 +115,7 @@ class NPSParksStatsSensor(NPSParksEntity, SensorEntity):
     """Sensor for aggregate stats."""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _STAT_CONFIG: ClassVar[dict[str, tuple[str, str, str]]] = {
+    STAT_CONFIG: ClassVar[dict[str, tuple[str, str, str]]] = {
         "total": ("Total Parks", "mdi:forest", "parks"),
         "visited": ("Parks Visited", "mdi:check-circle", "parks"),
         "unvisited": ("Parks Remaining", "mdi:circle-outline", "parks"),
@@ -153,7 +126,7 @@ class NPSParksStatsSensor(NPSParksEntity, SensorEntity):
         """Initialize the stats sensor."""
         super().__init__(coordinator)
         self._stat = stat
-        name, icon, unit = self._STAT_CONFIG[stat]
+        name, icon, unit = self.STAT_CONFIG[stat]
         self._attr_unique_id = f"nps_parks_stats_{stat}"
         self._attr_name = name
         self._attr_icon = icon
@@ -171,10 +144,10 @@ class NPSParksStatsSensor(NPSParksEntity, SensorEntity):
         visited = sum(
             1 for p in parks if self.coordinator.storage.is_visited(p["parkCode"])
         )
-        if self._stat == "total":
-            return total
-        if self._stat == "visited":
-            return visited
-        if self._stat == "unvisited":
-            return total - visited
-        return round(visited / total * 100, 1) if total else 0.0
+        values = {
+            "total": total,
+            "visited": visited,
+            "unvisited": total - visited,
+            "percentage": round(visited / total * 100, 1) if total else 0.0,
+        }
+        return values[self._stat]

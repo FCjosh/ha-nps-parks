@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 
 from homeassistant.components.select import SelectEntity
 
-from .const import CONF_DESIGNATIONS, DESIGNATION_GROUP_EXCEPTIONS, DESIGNATION_GROUPS
+from .const import CONF_DESIGNATIONS
+from .designations import filter_parks
 from .entity import NPSParksEntity
 
 if TYPE_CHECKING:
@@ -40,26 +41,11 @@ class NPSParkSelectEntity(NPSParksEntity, SelectEntity):
     def __init__(self, coordinator: NPSParksCoordinator, entry: ConfigEntry) -> None:
         """Initialize the park select entity."""
         super().__init__(coordinator)
-        selected = entry.options.get(CONF_DESIGNATIONS, [])
-        self._filter_enabled = bool(selected)
-        self._included_designations: set[str] = set()
-        self._included_exceptions: set[str] = set()
-        for group in selected:
-            self._included_designations |= DESIGNATION_GROUPS.get(group, set())
-            self._included_exceptions |= DESIGNATION_GROUP_EXCEPTIONS.get(group, set())
+        self._selected_groups = entry.options.get(CONF_DESIGNATIONS, [])
 
     def _parks(self) -> list[dict]:
         """Return the currently tracked parks, filtered and sorted by name."""
-        all_parks = self.coordinator.data
-        if self._filter_enabled:
-            parks = [
-                p
-                for p in all_parks
-                if p["designation"] in self._included_designations
-                or p["parkCode"] in self._included_exceptions
-            ]
-        else:
-            parks = list(all_parks)
+        parks = filter_parks(self.coordinator.data, self._selected_groups)
         parks.sort(key=lambda p: p["fullName"])
         return parks
 
