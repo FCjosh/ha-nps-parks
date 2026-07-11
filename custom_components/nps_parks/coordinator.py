@@ -47,14 +47,6 @@ class NPSParksCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             params = {"limit": 500, "api_key": self.api_key}
             response = await session.get(BASE_URL, params=params)
             data = await response.json()
-            samoa = next(
-                (p for p in data["data"] if "samoa" in p["fullName"].lower()), None
-            )
-            LOGGER.warning(
-                "Samoa entry: %s | %s",
-                samoa["designation"] if samoa else "not found",
-                samoa["parkCode"] if samoa else "",
-            )
             return data["data"]
 
         except Exception as exception:
