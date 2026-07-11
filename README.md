@@ -1,5 +1,7 @@
 # NPS Parks — Home Assistant Integration
 
+[![GitHub release](https://img.shields.io/github/v/release/FCjosh/ha-nps-parks)](https://github.com/FCjosh/ha-nps-parks/releases)
+
 Track your visits to US National Parks and NPS sites directly in Home Assistant.
 
 This integration connects to the [National Park Service API](https://www.nps.gov/subjects/developer/api-documentation.htm) and creates a sensor entity for every NPS site, letting you mark parks as visited, filter by designation, and build automations and dashboards around your park visits.
