@@ -18,6 +18,7 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
+    REQUEST_TIMEOUT,
     UPDATE_INTERVAL_OPTIONS,
 )
 from .designations import NPS_DESIGNATIONS
@@ -62,6 +63,7 @@ class NPSParksFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             response = await session.get(
                 BASE_URL,
                 params={"limit": 1, "api_key": api_key},
+                timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
             )
             if response.status in (401, 403):
                 return "invalid_auth"

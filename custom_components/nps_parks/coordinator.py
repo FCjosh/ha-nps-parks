@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -14,6 +15,7 @@ from .const import (
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     LOGGER,
+    REQUEST_TIMEOUT,
     UPDATE_INTERVAL_MAP,
 )
 from .data import NPSParksStorage
@@ -32,6 +34,7 @@ class NPSParksCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         super().__init__(
             hass=hass,
             logger=LOGGER,
+            config_entry=entry,
             name=DOMAIN,
             update_interval=UPDATE_INTERVAL_MAP[interval_key],
         )
@@ -42,12 +45,32 @@ class NPSParksCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
 
     async def _async_update_data(self) -> list[dict[str, Any]]:
         """Fetch data from NPS."""
+        session = async_get_clientsession(self.hass)
+        params = {"limit": 500, "api_key": self.api_key}
         try:
-            session = async_get_clientsession(self.hass)
-            params = {"limit": 500, "api_key": self.api_key}
-            response = await session.get(BASE_URL, params=params)
-            data = await response.json()
-            return data["data"]
+            async with session.get(
+                BASE_URL,
+                params=params,
+                timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+            ) as response:
+                if response.status in (401, 403):
+                    msg = f"NPS API rejected the API key (HTTP {response.status})"
+                    raise UpdateFailed(msg)
+                if not response.ok:
+                    msg = f"NPS API returned HTTP {response.status} {response.reason}"
+                    raise UpdateFailed(msg)
+                payload = await response.json(content_type=None)
+        except TimeoutError as exception:
+            msg = f"Timed out after {REQUEST_TIMEOUT}s waiting for the NPS API"
+            raise UpdateFailed(msg) from exception
+        except aiohttp.ClientError as exception:
+            msg = f"Error communicating with the NPS API: {exception}"
+            raise UpdateFailed(msg) from exception
+        except ValueError as exception:
+            msg = "NPS API returned a response that was not valid JSON"
+            raise UpdateFailed(msg) from exception
 
-        except Exception as exception:
-            raise UpdateFailed(exception) from exception
+        if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+            msg = "NPS API response did not contain a 'data' list"
+            raise UpdateFailed(msg)
+        return payload["data"]

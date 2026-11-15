@@ -8,6 +8,7 @@ LOGGER: Logger = getLogger(__package__)
 DOMAIN = "nps_parks"
 API_KEY = "api_key"
 BASE_URL = "https://developer.nps.gov/api/v1/parks"
+REQUEST_TIMEOUT = 30  # seconds
 
 CONF_UPDATE_INTERVAL = "update_interval"
 CONF_DESIGNATIONS = "designations"
